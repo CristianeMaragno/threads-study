@@ -1,3 +1,5 @@
+//gcc -pthread operations.c -o operations
+// ./ex
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
