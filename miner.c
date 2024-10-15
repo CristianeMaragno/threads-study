@@ -65,6 +65,10 @@ void* PoW(void *arg) {
 }
 
 int main(int argc, char **argv) {
+    struct timeval t1, t2; 
+    srand(time(NULL));
+    gettimeofday(&t1, NULL);
+
     char data[] = "Exemplo de dados do bloco";  // Representa o conteudo do bloco
     int num_zeros; // Numero de zeros requeridos no final do hash
 
@@ -82,6 +86,7 @@ int main(int argc, char **argv) {
     pthread_t threads[NUM_THREADS];
     int thread_ids[NUM_THREADS]; 
     int quantidade_threads = NUM_THREADS;
+    int first_thread = -1;
     for (int i = 0; i < quantidade_threads; i++) {
         thread_ids[i] = i; // Atribui um ID para cada thread
         d->thread_id = &thread_ids[i]; //problema!
@@ -95,7 +100,26 @@ int main(int argc, char **argv) {
         pthread_join(threads[i], NULL);
     }
 
-    //pthreadcancel
+    // Wait for any thread to finish
+    for (int i = 0; i < NUM_THREADS; i++) {
+        if (pthread_join(threads[i], NULL) == 0) {
+            first_thread = i; // Save the first finished thread index
+            printf("First thread %d finished, canceling the others...\n", i);
+            break;
+        }
+    }
+
+    // Cancel other threads
+    for (int i = 0; i < NUM_THREADS; i++) {
+        if (i != first_thread) {
+            pthread_cancel(threads[i]);
+            printf("Canceled thread %d\n", i);
+        }
+    }
+
+    gettimeofday(&t2, NULL);
+    double t_seq = (t2.tv_sec - t1.tv_sec) + ((t2.tv_usec - t1.tv_usec)/1000000.0);
+    printf("Tempo paralelo: %f\n", t_seq);
     
     return 0;
 }
