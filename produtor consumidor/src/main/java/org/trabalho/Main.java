@@ -6,12 +6,12 @@ import java.util.List;
 public class Main {
     public static void main(String[] args) {
         // Parâmetros iniciais
-        int numClientes = 5; // Número de clientes
-        int numTrabalhadoras = 1; // Número de threads trabalhadoras
-        int intervalo = 1000; // Intervalo para cada operação
-        int limiteRequisicoes = 3; // Limite de requisições por cliente
-        int numContas = 10; // Número de contas a serem criadas
-        int quantidadeMostrarBalanco = 5; //Número de requisições para mostrar balanço geral
+        int numClientes = Integer.parseInt(args[0]); // Número de clientes args[0]
+        int numTrabalhadoras = Integer.parseInt(args[1]); // Número de threads trabalhadoras args[1]
+        int intervalo = Integer.parseInt(args[2]); // Intervalo para cada operação
+        int limiteRequisicoes = Integer.parseInt(args[3]); // Limite de requisições por cliente
+        int numContas = Integer.parseInt(args[4]); // Número de contas a serem criadas
+        int quantidadeMostrarBalanco = Integer.parseInt(args[5]); //Número de requisições para mostrar balanço geral
 
         // Populando a lista de contas
         List<Conta> contas = new ArrayList<>();
@@ -19,17 +19,19 @@ public class Main {
             contas.add(new Conta(i, 1000));
         }
 
+        // Iniciando o servidor
+        Servidor servidor = new Servidor(contas, quantidadeMostrarBalanco);
+        servidor.start();
+
         // Criando threads trabalhadoras
         List<Trabalhadora> trabalhadoras = new ArrayList<>();
         for (int i = 0; i < numTrabalhadoras; i++) {
-            Trabalhadora trabalhadora = new Trabalhadora();
+            Trabalhadora trabalhadora = new Trabalhadora(i, servidor, contas, intervalo);
             trabalhadora.start();
             trabalhadoras.add(trabalhadora);
         }
 
-        // Iniciando o servidor
-        Servidor servidor = new Servidor(trabalhadoras, contas, quantidadeMostrarBalanco);
-        servidor.start();
+        servidor.setTrabalhadoras(trabalhadoras);
 
         // Criando e iniciando os clientes
         for (int i = 0; i < numClientes; i++) {

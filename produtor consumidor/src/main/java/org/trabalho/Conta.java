@@ -28,16 +28,22 @@ public class Conta {
     }
 
     public synchronized void depositar(int valor) {
-        this.saldo += valor;
+        float novoSaldo = this.saldo + valor;
+        this.saldo = novoSaldo;
     }
 
-    public synchronized void transferir(Conta destino, int valor) {
-        this.saldo -= valor;
-        destino.depositar(valor);
+    public synchronized void transferir(int valor) {
+        float novoSaldo = this.saldo - valor;
+        this.saldo = novoSaldo;
+    }
+
+    public synchronized void receberTransferencia(int valor) {
+        float novoSaldo = this.saldo + valor;
+        this.saldo = novoSaldo;
     }
 
     @Override
-    public String toString() {
+    public synchronized String toString() {
         return "Conta " + id + " - Saldo: " + saldo;
     }
 }

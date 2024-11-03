@@ -21,24 +21,26 @@ class Cliente extends Thread {
     public void run() {
         for (int i = 0; i < limiteRequisicoes; i++) {
             try {
-                // Gerar uma operação aleatória
-                int operacao = random.nextInt(3);
-                if (operacao == 0) {
-                    // Exibir balanço geral
-                    Conta conta = contas.get(random.nextInt(contas.size()));
-                    servidor.adicionarRequisicao(() -> conta.toString());
-                } else if (operacao == 1) {
-                    // Fazer depósito
-                    Conta conta = contas.get(random.nextInt(contas.size()));
-                    int valor = random.nextInt(100) - 50; // Depósito positivo ou negativo
-                    servidor.adicionarRequisicao(() -> conta.depositar(valor));
-                } else {
-                    // Transferência entre contas
-                    Conta conta1 = contas.get(random.nextInt(contas.size()));
-                    Conta conta2 = contas.get(random.nextInt(contas.size()));
-                    int valor = random.nextInt(100);
-                    servidor.adicionarRequisicao(() -> conta1.transferir(conta2, valor));
+
+                Operacao.Tipo[] tiposPermitidos = {Operacao.Tipo.DEPOSITO, Operacao.Tipo.TRANSFERENCIA};
+                Operacao.Tipo tipo = tiposPermitidos[random.nextInt(tiposPermitidos.length)];
+
+                Conta contaOrigem = contas.get(random.nextInt(contas.size()));
+                Conta contaDestino;
+                //Para garantir que a conta de destino é sempre diferente
+                do {
+                    contaDestino = contas.get(random.nextInt(contas.size()));
+                } while (contaDestino.equals(contaOrigem));
+
+                int valor = random.nextInt(100);
+                //Para possibilitar valores negativos quando a operação é de depósito
+                if(tipo == Operacao.Tipo.DEPOSITO){
+                    valor =- 50;
                 }
+
+                Operacao operacao = new Operacao(tipo, contaOrigem.getId(), contaDestino.getId(), valor);
+                servidor.adicionarRequisicao(operacao);
+
                 // Esperar o intervalo antes da próxima requisição
                 Thread.sleep(intervaloRequisicao);
             } catch (InterruptedException e) {

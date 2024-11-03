@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 class Servidor extends Thread {
-    private final List<Runnable> filaRequisicoes = new ArrayList<>();
-    private final List<Trabalhadora> trabalhadoras;
+    private final List<Operacao> filaRequisicoes = new ArrayList<>();
+    private List<Trabalhadora> trabalhadoras;
 
     private final List<Conta> contas;
 
@@ -13,51 +13,51 @@ class Servidor extends Thread {
 
     private int quantidadeMostrarBalanco;
 
-    public Servidor(List<Trabalhadora> trabalhadoras, List<Conta> contas, int quantidadeMostrarBalanco) {
-        this.trabalhadoras = trabalhadoras;
+    public Servidor(List<Conta> contas, int quantidadeMostrarBalanco) {
         this.contas = contas;
         this.quantidadeMostrarBalanco = quantidadeMostrarBalanco;
     }
 
-    public synchronized void adicionarRequisicao(Runnable requisicao) {
-        filaRequisicoes.add(requisicao);
+    public void setTrabalhadoras(List<Trabalhadora> trabalhadoras) {
+        this.trabalhadoras = trabalhadoras;
+    }
+
+    public synchronized void adicionarRequisicao(Operacao operacao) {
+        filaRequisicoes.add(operacao);
         notifyAll();
     }
 
-    private synchronized Runnable pegarRequisicao() throws InterruptedException {
+    private synchronized Operacao pegarRequisicao() throws InterruptedException {
         while (filaRequisicoes.isEmpty()) {
             wait();
         }
         return filaRequisicoes.remove(0);
     }
 
-    private void exibirBalançoContas() {
-        System.out.println("=== Balanço de todas as contas ===");
-        for (Conta conta : contas) {
-            System.out.println(conta);
+    public synchronized void notificarOperacaoConcluida(Operacao.Tipo tipo) {
+        if(tipo != Operacao.Tipo.EXIBIR_BALANCO){
+            contadorRequisicoes++;
+
+            if (contadorRequisicoes >= quantidadeMostrarBalanco) {
+                // Sincroniza para exibir o balanço sem alterações
+                Operacao operacao = new Operacao(Operacao.Tipo.EXIBIR_BALANCO);
+                this.adicionarRequisicao(operacao);
+                contadorRequisicoes = 0; // Reinicia o contador
+            }
         }
-        System.out.println("==================================");
     }
 
     @Override
     public void run() {
         while (true) {
             try {
-                Runnable requisicao = pegarRequisicao();
+                Operacao requisicao = pegarRequisicao();
                 // Enviar para uma trabalhadora livre
                 for (Trabalhadora trabalhadora : trabalhadoras) {
                     if (trabalhadora.estaLivre()) {
                         trabalhadora.executar(requisicao);
                         break;
                     }
-                }
-
-                contadorRequisicoes++;
-
-                // A cada x requisições processadas, exibe o balanço de todas as contas
-                if (contadorRequisicoes >= this.quantidadeMostrarBalanco) {
-                    exibirBalançoContas();
-                    contadorRequisicoes = 0; // Reinicia o contador
                 }
             } catch (InterruptedException e) {
                 e.printStackTrace();
