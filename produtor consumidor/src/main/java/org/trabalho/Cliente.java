@@ -21,7 +21,6 @@ class Cliente extends Thread {
     public void run() {
         for (int i = 0; i < limiteRequisicoes; i++) {
             try {
-
                 Operacao.Tipo[] tiposPermitidos = {Operacao.Tipo.DEPOSITO, Operacao.Tipo.TRANSFERENCIA};
                 Operacao.Tipo tipo = tiposPermitidos[random.nextInt(tiposPermitidos.length)];
 
@@ -35,7 +34,7 @@ class Cliente extends Thread {
                 int valor = random.nextInt(100);
                 //Para possibilitar valores negativos quando a operação é de depósito
                 if(tipo == Operacao.Tipo.DEPOSITO){
-                    valor =- 50;
+                    valor = valor - 50;
                 }
 
                 Operacao operacao = new Operacao(tipo, contaOrigem.getId(), contaDestino.getId(), valor);

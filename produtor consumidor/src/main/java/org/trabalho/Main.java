@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws InterruptedException {
         // Parâmetros iniciais
         int numClientes = Integer.parseInt(args[0]); // Número de clientes args[0]
         int numTrabalhadoras = Integer.parseInt(args[1]); // Número de threads trabalhadoras args[1]
@@ -21,22 +21,51 @@ public class Main {
 
         // Iniciando o servidor
         Servidor servidor = new Servidor(contas, quantidadeMostrarBalanco);
-        servidor.start();
 
         // Criando threads trabalhadoras
         List<Trabalhadora> trabalhadoras = new ArrayList<>();
         for (int i = 0; i < numTrabalhadoras; i++) {
             Trabalhadora trabalhadora = new Trabalhadora(i, servidor, contas, intervalo);
-            trabalhadora.start();
             trabalhadoras.add(trabalhadora);
         }
 
         servidor.setTrabalhadoras(trabalhadoras);
+        servidor.start();
+
+        // Iniciar as trabalhadoras
+        for (Trabalhadora trabalhadora : trabalhadoras) {
+            trabalhadora.start();
+        }
 
         // Criando e iniciando os clientes
+        List<Cliente> clientes = new ArrayList<>();
         for (int i = 0; i < numClientes; i++) {
             Cliente cliente = new Cliente(servidor, contas, intervalo, limiteRequisicoes);
+            clientes.add(cliente);
             cliente.start();
         }
+
+        // Aguarda todos os clientes terminarem
+        for (Cliente cliente : clientes) {
+            try {
+                cliente.join(5000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        boolean podeEncerrar = false;
+        do {
+            podeEncerrar = servidor.encerrar();
+            Thread.sleep(1000);
+        } while (!podeEncerrar);
+
+        try {
+            servidor.join(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+        System.out.println("Programa finalizado.");
     }
 }
